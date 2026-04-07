@@ -55,7 +55,7 @@ document.body.innerHTML = `
     <h1>&#128204; Knooppunten</h1>
     <div class="file-input-wrapper">
       <label for="gpx-file">&#128194; Laad GPX</label>
-      <input type="file" id="gpx-file" accept=".gpx" aria-label="Laad GPX bestand" />
+      <input type="file" id="gpx-file" accept=".gpx,application/gpx+xml" aria-label="Laad GPX bestand" />
     </div>
   </header>
   <div id="map" role="region" aria-label="Kaart"></div>
@@ -104,7 +104,9 @@ describe('Home screen – DOM structure', () => {
     const input = document.getElementById('gpx-file');
     expect(input).not.toBeNull();
     expect(input.getAttribute('type')).toBe('file');
-    expect(input.getAttribute('accept')).toBe('.gpx');
+    const accept = input.getAttribute('accept');
+    expect(accept).toContain('.gpx');
+    expect(accept).toContain('application/gpx+xml');
   });
 
   test('file input has an accessible label', () => {
@@ -171,5 +173,38 @@ describe('Home screen – file input validation', () => {
 
     const status = document.getElementById('status');
     expect(status.classList.contains('status--error')).toBe(true);
+  });
+});
+
+describe('MapManager – auto-scroll to user location', () => {
+  beforeEach(() => {
+    mockMap.setView.mockClear();
+    mockMap.getZoom.mockReturnValue(10);
+  });
+
+  test('pans to user position on the first GPS update', () => {
+    MapManager.updatePosition({ lat: 52.0, lon: 5.1, accuracy: 10 });
+    expect(mockMap.setView).toHaveBeenCalledWith([52.0, 5.1], expect.any(Number));
+  });
+
+  test('pans to user position on every subsequent GPS update', () => {
+    MapManager.updatePosition({ lat: 52.0, lon: 5.1, accuracy: 10 });
+    MapManager.updatePosition({ lat: 52.1, lon: 5.2, accuracy: 10 });
+    MapManager.updatePosition({ lat: 52.2, lon: 5.3, accuracy: 10 });
+
+    expect(mockMap.setView).toHaveBeenCalledTimes(3);
+    expect(mockMap.setView).toHaveBeenLastCalledWith([52.2, 5.3], expect.any(Number));
+  });
+
+  test('uses at least zoom level 14 when auto-panning', () => {
+    mockMap.getZoom.mockReturnValue(5);
+    MapManager.updatePosition({ lat: 52.0, lon: 5.1, accuracy: 10 });
+    expect(mockMap.setView).toHaveBeenCalledWith([52.0, 5.1], 14);
+  });
+
+  test('preserves higher zoom level when already zoomed in', () => {
+    mockMap.getZoom.mockReturnValue(17);
+    MapManager.updatePosition({ lat: 52.0, lon: 5.1, accuracy: 10 });
+    expect(mockMap.setView).toHaveBeenCalledWith([52.0, 5.1], 17);
   });
 });

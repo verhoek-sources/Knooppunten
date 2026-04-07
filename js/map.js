@@ -10,7 +10,6 @@ const MapManager = (() => {
   let knooppuntMarkers = [];
   let positionMarker = null;
   let accuracyCircle = null;
-  let positionWatchActive = false;
 
   // Icons
   const knooppuntIcon = (name, isActive) =>
@@ -124,10 +123,7 @@ const MapManager = (() => {
       }
     }
 
-    if (!positionWatchActive) {
-      map.setView(latlng, Math.max(map.getZoom(), 14));
-      positionWatchActive = true;
-    }
+    map.setView(latlng, Math.max(map.getZoom(), 14));
   }
 
   /**
@@ -151,7 +147,6 @@ const MapManager = (() => {
     }
     knooppuntMarkers.forEach(({ marker }) => map.removeLayer(marker));
     knooppuntMarkers = [];
-    positionWatchActive = false;
   }
 
   /**
