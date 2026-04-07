@@ -70,8 +70,21 @@ document.body.innerHTML = `
       <button id="center-btn" class="btn" type="button">
         &#10022; Centreer
       </button>
+      <button id="gpx-content-btn" class="btn" type="button" hidden>
+        &#128203; GPX inhoud
+      </button>
     </div>
     <div id="knooppunten-list" aria-live="polite" aria-label="Knooppunten lijst"></div>
+  </div>
+  <div id="gpx-modal" class="modal" role="dialog" aria-modal="true" hidden>
+    <div class="modal__backdrop"></div>
+    <div class="modal__panel" role="document">
+      <div class="modal__header">
+        <h2 id="gpx-modal-title" class="modal__title">GPX inhoud</h2>
+        <button id="gpx-modal-close" class="btn modal__close" type="button" aria-label="Sluiten">&#10005;</button>
+      </div>
+      <div id="gpx-modal-body" class="modal__body"></div>
+    </div>
   </div>
 `;
 
@@ -171,5 +184,56 @@ describe('Home screen – file input validation', () => {
 
     const status = document.getElementById('status');
     expect(status.classList.contains('status--error')).toBe(true);
+  });
+});
+
+describe('Home screen – no knooppunten found', () => {
+  let originalFileReader;
+
+  beforeEach(() => {
+    originalFileReader = global.FileReader;
+    const modal = document.getElementById('gpx-modal');
+    if (modal) modal.hidden = true;
+  });
+
+  afterEach(() => {
+    global.FileReader = originalFileReader;
+  });
+
+  function loadGpxContent(gpxContent) {
+    global.FileReader = class {
+      readAsText() {
+        this.onload({ target: { result: gpxContent } });
+      }
+    };
+    const input = document.getElementById('gpx-file');
+    const file = new File([gpxContent], 'route.gpx', { type: 'application/gpx+xml' });
+    Object.defineProperty(input, 'files', { value: [file], configurable: true });
+    input.dispatchEvent(new Event('change'));
+  }
+
+  test('opens the GPX content modal automatically when no knooppunten are found', () => {
+    const gpxWithoutKnooppunten = `<?xml version="1.0"?>
+<gpx version="1.1" xmlns="http://www.topografix.com/GPX/1/1">
+  <wpt lat="52.0" lon="5.0"><name>Start</name></wpt>
+  <trk><trkseg><trkpt lat="52.0" lon="5.0"/></trkseg></trk>
+</gpx>`;
+
+    loadGpxContent(gpxWithoutKnooppunten);
+
+    const modal = document.getElementById('gpx-modal');
+    expect(modal.hidden).toBe(false);
+  });
+
+  test('does not open the GPX content modal automatically when knooppunten are found', () => {
+    const gpxWithKnooppunten = `<?xml version="1.0"?>
+<gpx version="1.1" xmlns="http://www.topografix.com/GPX/1/1">
+  <wpt lat="52.0762" lon="5.8521"><name>42</name></wpt>
+</gpx>`;
+
+    loadGpxContent(gpxWithKnooppunten);
+
+    const modal = document.getElementById('gpx-modal');
+    expect(modal.hidden).toBe(true);
   });
 });

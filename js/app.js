@@ -105,6 +105,11 @@ const App = (() => {
           gpxContentBtn.hidden = false;
         }
 
+        // Auto-show file contents when no knooppunten are found
+        if (count === 0) {
+          showGpxContent();
+        }
+
         // Auto-start tracking when a file is loaded
         startTracking();
       } catch (err) {
