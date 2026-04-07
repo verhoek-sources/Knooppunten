@@ -165,3 +165,8 @@ const MapManager = (() => {
 
   return { init, displayRoute, updatePosition, setActiveKnooppunt, clearRoute, panToPosition };
 })();
+
+// Export for Node.js/Jest (tests) while keeping global for browser use
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { MapManager };
+}

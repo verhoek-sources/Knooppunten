@@ -207,10 +207,10 @@ const App = (() => {
 
     knooppuntListEl.innerHTML = `<ul class="knooppunten-list">${items}</ul>`;
 
-    // Scroll the active item into view
+    // Scroll the active item into view (behavior: 'smooth' omitted for Safari compatibility)
     const activeItem = knooppuntListEl.querySelector('.knooppunt-item--active');
     if (activeItem) {
-      activeItem.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      activeItem.scrollIntoView({ block: 'nearest' });
     }
   }
 
@@ -229,3 +229,8 @@ const App = (() => {
 })();
 
 document.addEventListener('DOMContentLoaded', () => App.init());
+
+// Export for Node.js/Jest (tests) while keeping global for browser use
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { App };
+}

@@ -71,3 +71,8 @@ const GeoTracker = (() => {
 
   return { start, stop, isTracking };
 })();
+
+// Export for Node.js/Jest (tests) while keeping global for browser use
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { GeoTracker };
+}
