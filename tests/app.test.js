@@ -55,7 +55,7 @@ document.body.innerHTML = `
     <h1>&#128204; Knooppunten</h1>
     <div class="file-input-wrapper">
       <label for="gpx-file">&#128194; Laad GPX</label>
-      <input type="file" id="gpx-file" accept=".gpx,application/gpx+xml" aria-label="Laad GPX bestand" />
+      <input type="file" id="gpx-file" accept=".gpx" aria-label="Laad GPX bestand" />
     </div>
   </header>
   <div id="map" role="region" aria-label="Kaart"></div>
@@ -105,8 +105,7 @@ describe('Home screen – DOM structure', () => {
     expect(input).not.toBeNull();
     expect(input.getAttribute('type')).toBe('file');
     const accept = input.getAttribute('accept');
-    expect(accept).toContain('.gpx');
-    expect(accept).toContain('application/gpx+xml');
+    expect(accept).toBe('.gpx');
   });
 
   test('file input has an accessible label', () => {
