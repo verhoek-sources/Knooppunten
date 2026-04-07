@@ -44,9 +44,24 @@
         <button id="center-btn" class="btn" type="button">
           &#10022; Centreer
         </button>
+        <button id="gpx-content-btn" class="btn" type="button" hidden>
+          &#128203; GPX inhoud
+        </button>
       </div>
 
       <div id="knooppunten-list" aria-live="polite" aria-label="Knooppunten lijst"></div>
+    </div>
+
+    <!-- GPX content modal -->
+    <div id="gpx-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="gpx-modal-title" hidden>
+      <div class="modal__backdrop"></div>
+      <div class="modal__panel" role="document">
+        <div class="modal__header">
+          <h2 id="gpx-modal-title" class="modal__title">GPX inhoud</h2>
+          <button id="gpx-modal-close" class="btn modal__close" type="button" aria-label="Sluiten">&#10005;</button>
+        </div>
+        <div id="gpx-modal-body" class="modal__body"></div>
+      </div>
     </div>
 
     <!-- Leaflet JS -->

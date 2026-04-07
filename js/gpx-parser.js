@@ -58,7 +58,13 @@ function parseGPX(xmlString) {
     });
   });
 
-  return { knooppunten, trackPoints, routePoints };
+  const metadataEl = xml.querySelector('metadata');
+  const metadata = {
+    name: metadataEl?.querySelector('name')?.textContent?.trim() || '',
+    desc: metadataEl?.querySelector('desc')?.textContent?.trim() || '',
+  };
+
+  return { knooppunten, trackPoints, routePoints, metadata };
 }
 
 /**

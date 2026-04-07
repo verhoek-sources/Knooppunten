@@ -160,6 +160,42 @@ describe('parseGPX', () => {
     expect(() => parseGPX('<notvalid><<')).toThrow();
   });
 
+  test('returns metadata name and description', () => {
+    const withMetadata = `<?xml version="1.0"?>
+<gpx xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata>
+    <name>Mijn route</name>
+    <desc>Een mooie fietstocht</desc>
+  </metadata>
+</gpx>`;
+    const { metadata } = parseGPX(withMetadata);
+    expect(metadata.name).toBe('Mijn route');
+    expect(metadata.desc).toBe('Een mooie fietstocht');
+  });
+
+  test('returns empty metadata when metadata element is absent', () => {
+    const noMetadata = `<?xml version="1.0"?>
+<gpx xmlns="http://www.topografix.com/GPX/1/1">
+  <wpt lat="51.5" lon="5.1"><name>1</name></wpt>
+</gpx>`;
+    const { metadata } = parseGPX(noMetadata);
+    expect(metadata.name).toBe('');
+    expect(metadata.desc).toBe('');
+  });
+
+  test('metadata fields are trimmed', () => {
+    const whitespace = `<?xml version="1.0"?>
+<gpx xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata>
+    <name>  Route met spaties  </name>
+    <desc>  Beschrijving  </desc>
+  </metadata>
+</gpx>`;
+    const { metadata } = parseGPX(whitespace);
+    expect(metadata.name).toBe('Route met spaties');
+    expect(metadata.desc).toBe('Beschrijving');
+  });
+
   const routeGPX = `<?xml version="1.0" encoding="UTF-8"?>
 <gpx version="1.1" xmlns="http://www.topografix.com/GPX/1/1">
   <rte>

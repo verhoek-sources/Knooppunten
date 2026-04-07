@@ -15,6 +15,10 @@ const App = (() => {
   let knooppuntListEl = null;
   let trackingBtn = null;
   let centerBtn = null;
+  let gpxContentBtn = null;
+  let gpxModal = null;
+  let gpxModalBody = null;
+  let gpxModalCloseBtn = null;
 
   /**
    * Initialise the application.
@@ -25,6 +29,9 @@ const App = (() => {
     knooppuntListEl = document.getElementById('knooppunten-list');
     trackingBtn = document.getElementById('tracking-btn');
     centerBtn = document.getElementById('center-btn');
+    gpxContentBtn = document.getElementById('gpx-content-btn');
+    gpxModal = document.getElementById('gpx-modal');
+    gpxModalBody = document.getElementById('gpx-modal-body');
 
     MapManager.init('map');
 
@@ -37,6 +44,24 @@ const App = (() => {
       centerBtn.addEventListener('click', () => {
         if (currentPosition) {
           MapManager.panToPosition(currentPosition);
+        }
+      });
+    }
+    if (gpxContentBtn) {
+      gpxContentBtn.addEventListener('click', showGpxContent);
+    }
+    if (gpxModal) {
+      gpxModalCloseBtn = document.getElementById('gpx-modal-close');
+      if (gpxModalCloseBtn) {
+        gpxModalCloseBtn.addEventListener('click', closeGpxContent);
+      }
+      const backdrop = gpxModal.querySelector('.modal__backdrop');
+      if (backdrop) {
+        backdrop.addEventListener('click', closeGpxContent);
+      }
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !gpxModal.hidden) {
+          closeGpxContent();
         }
       });
     }
@@ -73,6 +98,11 @@ const App = (() => {
           setStatus(`Route geladen met ${count} knooppunten. GPS tracking gestart.`);
         } else {
           setStatus('Route geladen. Geen knooppunten gevonden in dit GPX bestand.');
+        }
+
+        // Reveal the GPX content button now that a file is loaded
+        if (gpxContentBtn) {
+          gpxContentBtn.hidden = false;
         }
 
         // Auto-start tracking when a file is loaded
@@ -223,6 +253,125 @@ const App = (() => {
   function setStatus(message, type = 'info') {
     statusEl.innerHTML = message;
     statusEl.className = 'status status--' + type;
+  }
+
+  /**
+   * Build a labelled section element for the GPX content modal.
+   *
+   * @param {string} title
+   * @returns {HTMLElement}
+   */
+  function buildGpxSection(title) {
+    const section = document.createElement('section');
+    section.className = 'gpx-section';
+
+    const heading = document.createElement('h3');
+    heading.className = 'gpx-section__title';
+    heading.textContent = title;
+    section.appendChild(heading);
+
+    return section;
+  }
+
+  /**
+   * Append a key-value paragraph to an element using only safe text nodes.
+   *
+   * @param {HTMLElement} parent
+   * @param {string} label
+   * @param {string} value
+   */
+  function appendDetail(parent, label, value) {
+    const p = document.createElement('p');
+    p.className = 'gpx-detail';
+    const strong = document.createElement('strong');
+    strong.textContent = label;
+    p.appendChild(strong);
+    p.appendChild(document.createTextNode(value));
+    parent.appendChild(p);
+  }
+
+  /**
+   * Render GPX content inside the modal using safe DOM APIs (no innerHTML
+   * with user-provided data, preventing XSS).
+   */
+  function showGpxContent() {
+    if (!gpxData || !gpxModal || !gpxModalBody) return;
+
+    // Clear previous content
+    gpxModalBody.textContent = '';
+
+    const { metadata, knooppunten, trackPoints, routePoints } = gpxData;
+    const knooppuntItems = knooppunten.filter((k) => k.isKnooppunt);
+
+    // ── Route metadata ───────────────────────────────────────
+    if (metadata && (metadata.name || metadata.desc)) {
+      const section = buildGpxSection('Route informatie');
+      if (metadata.name) {
+        appendDetail(section, 'Naam: ', metadata.name);
+      }
+      if (metadata.desc) {
+        appendDetail(section, 'Beschrijving: ', metadata.desc);
+      }
+      gpxModalBody.appendChild(section);
+    }
+
+    // ── Knooppunten ──────────────────────────────────────────
+    {
+      const section = buildGpxSection(`Knooppunten (${knooppuntItems.length})`);
+      if (knooppuntItems.length === 0) {
+        const p = document.createElement('p');
+        p.className = 'gpx-detail gpx-detail--muted';
+        p.textContent = 'Geen knooppunten gevonden.';
+        section.appendChild(p);
+      } else {
+        const list = document.createElement('ol');
+        list.className = 'gpx-knooppunt-list';
+        knooppuntItems.forEach((k) => {
+          const li = document.createElement('li');
+          li.className = 'gpx-knooppunt-item';
+          const badge = document.createElement('span');
+          badge.className = 'knooppunt-badge';
+          badge.textContent = k.name;
+          li.appendChild(badge);
+          const coords = document.createElement('span');
+          coords.className = 'gpx-coords';
+          coords.textContent = `${k.lat.toFixed(5)}, ${k.lon.toFixed(5)}`;
+          li.appendChild(coords);
+          list.appendChild(li);
+        });
+        section.appendChild(list);
+      }
+      gpxModalBody.appendChild(section);
+    }
+
+    // ── Statistics ───────────────────────────────────────────
+    {
+      const section = buildGpxSection('Statistieken');
+      appendDetail(section, 'Knooppunten: ', String(knooppuntItems.length));
+      appendDetail(section, 'Waypoints: ', String(knooppunten.length));
+      appendDetail(section, 'Trackpunten: ', String(trackPoints.length));
+      if (routePoints.length > 0) {
+        appendDetail(section, 'Routepunten: ', String(routePoints.length));
+      }
+      gpxModalBody.appendChild(section);
+    }
+
+    gpxModal.hidden = false;
+    if (gpxModalCloseBtn) {
+      gpxModalCloseBtn.focus();
+    }
+  }
+
+  /**
+   * Hide the GPX content modal.
+   */
+  function closeGpxContent() {
+    if (gpxModal) {
+      gpxModal.hidden = true;
+      if (gpxContentBtn) {
+        gpxContentBtn.focus();
+      }
+    }
   }
 
   return { init };
