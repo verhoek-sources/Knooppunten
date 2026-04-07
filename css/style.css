@@ -1,0 +1,306 @@
+/* =============================================================
+   Knooppunten – Main styles
+   ============================================================= */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --color-primary: #2563eb;
+  --color-primary-dark: #1d4ed8;
+  --color-success: #16a34a;
+  --color-error: #dc2626;
+  --color-bg: #f8fafc;
+  --color-surface: #ffffff;
+  --color-text: #1e293b;
+  --color-muted: #64748b;
+  --color-border: #e2e8f0;
+  --header-height: 60px;
+  --panel-height: 200px;
+  --border-radius: 8px;
+}
+
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  overflow: hidden;
+}
+
+/* ── Header ──────────────────────────────────────────────── */
+
+header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  height: var(--header-height);
+  background: var(--color-primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+header h1 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  flex: 1;
+}
+
+.file-input-wrapper {
+  position: relative;
+}
+
+.file-input-wrapper label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.file-input-wrapper label:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.file-input-wrapper input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+/* ── Map ─────────────────────────────────────────────────── */
+
+#map {
+  position: fixed;
+  top: var(--header-height);
+  left: 0;
+  right: 0;
+  bottom: var(--panel-height);
+  z-index: 1;
+}
+
+/* ── Info panel ──────────────────────────────────────────── */
+
+#info-panel {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--panel-height);
+  z-index: 1000;
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* ── Status bar ──────────────────────────────────────────── */
+
+.status {
+  padding: 8px 16px;
+  font-size: 0.875rem;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg);
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status--error {
+  color: var(--color-error);
+  background: #fef2f2;
+}
+
+.status strong {
+  font-weight: 700;
+}
+
+/* ── Panel toolbar ───────────────────────────────────────── */
+
+.panel-toolbar {
+  display: flex;
+  gap: 8px;
+  padding: 6px 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.btn {
+  padding: 6px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  background: var(--color-surface);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.btn:hover {
+  background: var(--color-bg);
+}
+
+.btn--primary {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
+}
+
+.btn--primary:hover {
+  background: var(--color-primary-dark);
+  border-color: var(--color-primary-dark);
+}
+
+.tracking-btn--active {
+  background: var(--color-error) !important;
+  border-color: var(--color-error) !important;
+  color: #fff !important;
+}
+
+/* ── Knooppunten list ────────────────────────────────────── */
+
+#knooppunten-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 8px;
+}
+
+.knooppunten-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+  padding: 6px 0;
+}
+
+.knooppunt-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.knooppunt-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 700;
+  border: 2px solid transparent;
+  transition: transform 0.15s, background 0.15s;
+}
+
+.knooppunt-item--passed .knooppunt-badge {
+  background: var(--color-success);
+  opacity: 0.6;
+}
+
+.knooppunt-item--active .knooppunt-badge {
+  background: #f97316;
+  border-color: #ea580c;
+  transform: scale(1.25);
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.3);
+}
+
+.knooppunt-check {
+  font-size: 0.75rem;
+  color: var(--color-success);
+  font-weight: 700;
+}
+
+.knooppunt-distance {
+  font-size: 0.7rem;
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+
+.no-knooppunten {
+  color: var(--color-muted);
+  font-size: 0.875rem;
+  padding: 8px;
+}
+
+/* ── Leaflet custom markers ──────────────────────────────── */
+
+.knooppunt-icon {
+  background: var(--color-primary);
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
+.knooppunt-icon span {
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1;
+}
+
+.knooppunt-icon--active {
+  background: #f97316 !important;
+  border-color: #ea580c !important;
+  transform: scale(1.3);
+  box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
+  z-index: 1000 !important;
+}
+
+/* ── Position marker ─────────────────────────────────────── */
+
+.position-icon {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
+.position-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #2563eb;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 2px #2563eb, 0 2px 8px rgba(37, 99, 235, 0.5);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 2px #2563eb, 0 2px 8px rgba(37, 99, 235, 0.5); }
+  50%       { box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.2), 0 2px 8px rgba(37, 99, 235, 0.5); }
+}
+
+/* ── Responsive adjustments ──────────────────────────────── */
+
+@media (min-width: 640px) {
+  :root {
+    --panel-height: 180px;
+  }
+}

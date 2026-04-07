@@ -1,0 +1,15 @@
+{
+  "name": "knooppunten",
+  "version": "1.0.0",
+  "description": "An application that reads GPX files, tracks your route, and shows your position in the route numbers (knooppunten).",
+  "scripts": {
+    "test": "jest --testEnvironment=jsdom"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0"
+  },
+  "dependencies": {
+    "leaflet": "^1.9.4"
+  }
+}
