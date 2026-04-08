@@ -8,6 +8,7 @@ const MapManager = (() => {
   let map = null;
   let routeLayer = null;
   let knooppuntMarkers = [];
+  let osmKnooppuntMarkers = [];
   let positionMarker = null;
   let accuracyCircle = null;
 
@@ -15,6 +16,14 @@ const MapManager = (() => {
   const knooppuntIcon = (name, isActive) =>
     L.divIcon({
       className: 'knooppunt-icon' + (isActive ? ' knooppunt-icon--active' : ''),
+      html: `<span>${name}</span>`,
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
+    });
+
+  const osmKnooppuntIcon = (name) =>
+    L.divIcon({
+      className: 'knooppunt-icon knooppunt-icon--osm',
       html: `<span>${name}</span>`,
       iconSize: [32, 32],
       iconAnchor: [16, 16],
@@ -150,6 +159,34 @@ const MapManager = (() => {
   }
 
   /**
+   * Display OSM knooppunten markers on the map, replacing any previous OSM markers.
+   *
+   * @param {Array<{ lat: number, lon: number, name: string, networkType: string }>} knooppunten
+   */
+  function displayOsmKnooppunten(knooppunten) {
+    clearOsmKnooppunten();
+
+    knooppunten.forEach((k) => {
+      const networkLabel = k.networkType === 'rcn' ? 'Fiets' : 'Wandel';
+      const marker = L.marker([k.lat, k.lon], {
+        icon: osmKnooppuntIcon(k.name),
+        title: `OSM Knooppunt ${k.name} (${networkLabel})`,
+      })
+        .addTo(map)
+        .bindPopup(`<strong>Knooppunt ${k.name}</strong><br><small>${networkLabel}knooppunt (OpenStreetMap)</small>`);
+      osmKnooppuntMarkers.push({ marker, name: k.name });
+    });
+  }
+
+  /**
+   * Remove all OSM knooppunt markers from the map.
+   */
+  function clearOsmKnooppunten() {
+    osmKnooppuntMarkers.forEach(({ marker }) => map.removeLayer(marker));
+    osmKnooppuntMarkers = [];
+  }
+
+  /**
    * Pan/zoom the map to follow the current position.
    *
    * @param {{ lat: number, lon: number }} position
@@ -158,7 +195,7 @@ const MapManager = (() => {
     map.panTo([position.lat, position.lon]);
   }
 
-  return { init, displayRoute, updatePosition, setActiveKnooppunt, clearRoute, panToPosition };
+  return { init, displayRoute, updatePosition, setActiveKnooppunt, clearRoute, panToPosition, displayOsmKnooppunten, clearOsmKnooppunten };
 })();
 
 // Export for Node.js/Jest (tests) while keeping global for browser use

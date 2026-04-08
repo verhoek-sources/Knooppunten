@@ -73,6 +73,9 @@ document.body.innerHTML = `
       <button id="gpx-content-btn" class="btn" type="button" hidden>
         &#128203; GPX inhoud
       </button>
+      <button id="osm-knooppunten-btn" class="btn btn--osm" type="button" hidden>
+        &#128506; Knooppunten ophalen
+      </button>
     </div>
     <div id="knooppunten-list" aria-live="polite" aria-label="Knooppunten lijst"></div>
   </div>
@@ -95,6 +98,9 @@ const gpxParser = require('../js/gpx-parser');
 global.parseGPX = gpxParser.parseGPX;
 global.findNearestKnooppunt = gpxParser.findNearestKnooppunt;
 global.formatDistance = gpxParser.formatDistance;
+
+const { OsmKnooppunten } = require('../js/osm-knooppunten');
+global.OsmKnooppunten = OsmKnooppunten;
 
 const { MapManager } = require('../js/map');
 global.MapManager = MapManager;
@@ -363,6 +369,107 @@ describe('Raw GPX button – shows raw file content', () => {
     expect(modal.hidden).toBe(false);
     document.getElementById('gpx-modal-close').click();
     expect(modal.hidden).toBe(true);
+  });
+});
+
+// ── OSM knooppunten button ────────────────────────────────────────────────────
+
+describe('OSM knooppunten button – DOM structure', () => {
+  test('toolbar contains the OSM knooppunten button', () => {
+    const btn = document.getElementById('osm-knooppunten-btn');
+    expect(btn).not.toBeNull();
+    expect(btn.getAttribute('type')).toBe('button');
+  });
+
+  test('OSM button is initially hidden', () => {
+    const btn = document.getElementById('osm-knooppunten-btn');
+    expect(btn.hidden).toBe(true);
+  });
+});
+
+describe('OSM knooppunten button – shown when GPX has no knooppunten', () => {
+  const noKnooppuntenGPX = `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" xmlns="http://www.topografix.com/GPX/1/1">
+  <trk><trkseg>
+    <trkpt lat="51.5000" lon="5.1000"><ele>5</ele></trkpt>
+    <trkpt lat="51.5050" lon="5.1050"><ele>6</ele></trkpt>
+  </trkseg></trk>
+</gpx>`;
+
+  beforeEach(() => {
+    loadGpxFile(noKnooppuntenGPX);
+  });
+
+  test('OSM button is revealed when no knooppunten in GPX', () => {
+    const btn = document.getElementById('osm-knooppunten-btn');
+    expect(btn.hidden).toBe(false);
+  });
+});
+
+describe('OSM knooppunten button – hidden when GPX already has knooppunten', () => {
+  const withKnooppuntenGPX = `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" xmlns="http://www.topografix.com/GPX/1/1">
+  <wpt lat="52.3000" lon="4.8000"><name>42</name></wpt>
+  <trk><trkseg>
+    <trkpt lat="52.3000" lon="4.8000"><ele>0</ele></trkpt>
+  </trkseg></trk>
+</gpx>`;
+
+  beforeEach(() => {
+    loadGpxFile(withKnooppuntenGPX);
+  });
+
+  test('OSM button stays hidden when GPX has knooppunten', () => {
+    const btn = document.getElementById('osm-knooppunten-btn');
+    expect(btn.hidden).toBe(true);
+  });
+});
+
+describe('OSM knooppunten button – fetches and displays knooppunten', () => {
+  const noKnooppuntenGPX = `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" xmlns="http://www.topografix.com/GPX/1/1">
+  <trk><trkseg>
+    <trkpt lat="51.5000" lon="5.1000"><ele>5</ele></trkpt>
+    <trkpt lat="51.5050" lon="5.1050"><ele>6</ele></trkpt>
+  </trkseg></trk>
+</gpx>`;
+
+  const mockOsmData = [
+    { lat: 51.501, lon: 5.101, name: '23', isKnooppunt: true, osmId: 1, networkType: 'rcn' },
+    { lat: 51.504, lon: 5.104, name: '45', isKnooppunt: true, osmId: 2, networkType: 'rcn' },
+  ];
+
+  beforeEach(() => {
+    jest.spyOn(OsmKnooppunten, 'fetchForRoute').mockResolvedValue(mockOsmData);
+    loadGpxFile(noKnooppuntenGPX);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  test('clicking OSM button calls fetchForRoute', async () => {
+    document.getElementById('osm-knooppunten-btn').click();
+    await Promise.resolve(); // flush microtasks
+    expect(OsmKnooppunten.fetchForRoute).toHaveBeenCalled();
+  });
+
+  test('after fetch the panel shows OSM knooppunten', async () => {
+    document.getElementById('osm-knooppunten-btn').click();
+    await Promise.resolve();
+    // Flush promise chain (fetchForRoute is async)
+    await new Promise((r) => setTimeout(r, 0));
+    const list = document.getElementById('knooppunten-list');
+    expect(list.textContent).toContain('OpenStreetMap knooppunten');
+    expect(list.textContent).toContain('23');
+    expect(list.textContent).toContain('45');
+  });
+
+  test('after fetch the button text changes to verbergen', async () => {
+    document.getElementById('osm-knooppunten-btn').click();
+    await new Promise((r) => setTimeout(r, 0));
+    const btn = document.getElementById('osm-knooppunten-btn');
+    expect(btn.textContent).toContain('verbergen');
   });
 });
 

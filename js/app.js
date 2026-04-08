@@ -2,13 +2,15 @@
  * Main application module — orchestrates the map, GPX parsing, and geolocation.
  */
 
-/* global MapManager, GeoTracker, parseGPX, findNearestKnooppunt, formatDistance */
+/* global MapManager, GeoTracker, parseGPX, findNearestKnooppunt, formatDistance, OsmKnooppunten */
 
 const App = (() => {
   let gpxData = null;
   let rawGpxText = null;
   let currentPosition = null;
   let passedKnooppunten = new Set();
+  let osmKnooppunten = null;      // knooppunten fetched from OSM
+  let osmVisible = false;         // whether OSM knooppunten are currently shown
 
   // DOM references (set in init)
   let fileInput = null;
@@ -21,6 +23,7 @@ const App = (() => {
   let gpxModalBody = null;
   let gpxModalCloseBtn = null;
   let gpxRawBtn = null;
+  let osmKnooppuntenBtn = null;
 
   /**
    * Initialise the application.
@@ -32,6 +35,7 @@ const App = (() => {
     trackingBtn = document.getElementById('tracking-btn');
     centerBtn = document.getElementById('center-btn');
     gpxContentBtn = document.getElementById('gpx-content-btn');
+    osmKnooppuntenBtn = document.getElementById('osm-knooppunten-btn');
     gpxModal = document.getElementById('gpx-modal');
     gpxModalBody = document.getElementById('gpx-modal-body');
 
@@ -51,6 +55,9 @@ const App = (() => {
     }
     if (gpxContentBtn) {
       gpxContentBtn.addEventListener('click', showGpxContent);
+    }
+    if (osmKnooppuntenBtn) {
+      osmKnooppuntenBtn.addEventListener('click', toggleOsmKnooppunten);
     }
     if (gpxModal) {
       gpxModalCloseBtn = document.getElementById('gpx-modal-close');
@@ -97,14 +104,30 @@ const App = (() => {
         rawGpxText = e.target.result;
         gpxData = parseGPX(e.target.result);
         passedKnooppunten.clear();
+
+        // Reset OSM state when a new file is loaded
+        osmKnooppunten = null;
+        osmVisible = false;
+        MapManager.clearOsmKnooppunten();
+
         MapManager.displayRoute(gpxData);
         updateKnooppuntList();
 
         const count = gpxData.knooppunten.filter((k) => k.isKnooppunt).length;
         if (count > 0) {
           setStatus(`Route geladen met ${count} knooppunten. GPS tracking gestart.`);
+          // Hide OSM button when GPX already has knooppunten
+          if (osmKnooppuntenBtn) {
+            osmKnooppuntenBtn.hidden = true;
+          }
         } else {
           setStatus('Route geladen. Geen knooppunten gevonden in dit GPX bestand.');
+          // Show OSM button to allow fetching knooppunten from OpenStreetMap
+          if (osmKnooppuntenBtn) {
+            osmKnooppuntenBtn.hidden = false;
+            osmKnooppuntenBtn.textContent = '\uD83D\uDDFA Knooppunten ophalen';
+            osmKnooppuntenBtn.classList.remove('btn--osm-active');
+          }
         }
 
         // Reveal the GPX content button now that a file is loaded
@@ -207,6 +230,79 @@ const App = (() => {
   }
 
   /**
+   * Toggle OSM knooppunten display:
+   * – First click fetches them from OpenStreetMap (if not yet loaded) and shows them.
+   * – Subsequent clicks toggle visibility.
+   */
+  function toggleOsmKnooppunten() {
+    if (!gpxData) return;
+
+    if (osmVisible) {
+      // Hide OSM knooppunten
+      MapManager.clearOsmKnooppunten();
+      osmVisible = false;
+      if (osmKnooppuntenBtn) {
+        osmKnooppuntenBtn.textContent = '\uD83D\uDDFA Knooppunten ophalen';
+        osmKnooppuntenBtn.classList.remove('btn--osm-active');
+      }
+      updateKnooppuntList();
+      setStatus('OSM knooppunten verborgen.');
+    } else if (osmKnooppunten !== null) {
+      // Already fetched — just show again
+      MapManager.displayOsmKnooppunten(osmKnooppunten);
+      osmVisible = true;
+      if (osmKnooppuntenBtn) {
+        osmKnooppuntenBtn.textContent = '\uD83D\uDDFA Knooppunten verbergen';
+        osmKnooppuntenBtn.classList.add('btn--osm-active');
+      }
+      updateKnooppuntList();
+    } else {
+      // Fetch from OSM
+      fetchOsmKnooppunten();
+    }
+  }
+
+  /**
+   * Fetch knooppunten from OpenStreetMap for the current route and display them.
+   */
+  function fetchOsmKnooppunten() {
+    if (!gpxData) return;
+
+    if (osmKnooppuntenBtn) {
+      osmKnooppuntenBtn.disabled = true;
+      osmKnooppuntenBtn.textContent = '\uD83D\uDDFA Laden…';
+    }
+    setStatus('Knooppunten ophalen van OpenStreetMap…');
+
+    OsmKnooppunten.fetchForRoute(gpxData)
+      .then((results) => {
+        osmKnooppunten = results;
+        osmVisible = true;
+        MapManager.displayOsmKnooppunten(osmKnooppunten);
+        updateKnooppuntList();
+
+        if (osmKnooppuntenBtn) {
+          osmKnooppuntenBtn.disabled = false;
+          osmKnooppuntenBtn.textContent = '\uD83D\uDDFA Knooppunten verbergen';
+          osmKnooppuntenBtn.classList.add('btn--osm-active');
+        }
+
+        if (osmKnooppunten.length === 0) {
+          setStatus('Geen knooppunten gevonden op OpenStreetMap voor dit gebied.');
+        } else {
+          setStatus(`${osmKnooppunten.length} knooppunten opgehaald van OpenStreetMap.`);
+        }
+      })
+      .catch((err) => {
+        if (osmKnooppuntenBtn) {
+          osmKnooppuntenBtn.disabled = false;
+          osmKnooppuntenBtn.textContent = '\uD83D\uDDFA Knooppunten ophalen';
+        }
+        setStatus('Fout bij ophalen van OSM knooppunten: ' + err.message, 'error');
+      });
+  }
+
+  /**
    * Render route summary info (waypoints and trackpoints) when no knooppunten are present.
    * Uses safe DOM APIs to prevent XSS with user-supplied waypoint names.
    */
@@ -214,11 +310,36 @@ const App = (() => {
     const container = document.createElement('div');
     container.className = 'route-summary';
 
-    // ── Numbered nodes (none found) ──────────────────────────
-    const noKnooppuntenP = document.createElement('p');
-    noKnooppuntenP.className = 'no-knooppunten';
-    noKnooppuntenP.textContent = 'Geen knooppunten gevonden.';
-    container.appendChild(noKnooppuntenP);
+    // ── OSM knooppunten (if loaded and visible) ───────────────
+    if (osmVisible && osmKnooppunten && osmKnooppunten.length > 0) {
+      const heading = document.createElement('p');
+      heading.className = 'route-summary__heading';
+      heading.textContent = `OpenStreetMap knooppunten (${osmKnooppunten.length})`;
+      container.appendChild(heading);
+
+      const list = document.createElement('ul');
+      list.className = 'knooppunten-list';
+      osmKnooppunten.forEach((k) => {
+        const li = document.createElement('li');
+        li.className = 'knooppunt-item';
+        const badge = document.createElement('span');
+        badge.className = 'knooppunt-badge knooppunt-badge--osm';
+        badge.textContent = k.name;
+        li.appendChild(badge);
+        const typeSpan = document.createElement('span');
+        typeSpan.className = 'knooppunt-distance';
+        typeSpan.textContent = k.networkType === 'rcn' ? 'fiets' : 'wandel';
+        li.appendChild(typeSpan);
+        list.appendChild(li);
+      });
+      container.appendChild(list);
+    } else if (!osmVisible) {
+      // ── Numbered nodes (none found) ──────────────────────────
+      const noKnooppuntenP = document.createElement('p');
+      noKnooppuntenP.className = 'no-knooppunten';
+      noKnooppuntenP.textContent = 'Geen knooppunten gevonden.';
+      container.appendChild(noKnooppuntenP);
+    }
 
     // ── Waypoints ────────────────────────────────────────────
     const allWaypoints = gpxData.knooppunten; // all wpt elements (isKnooppunt = false here)

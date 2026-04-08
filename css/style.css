@@ -506,3 +506,31 @@ header h1 {
   padding: 12px;
   margin: 0;
 }
+
+/* ── OSM knooppunten button ──────────────────────────────── */
+
+.btn--osm {
+  background: var(--color-surface);
+  border-color: #16a34a;
+  color: #16a34a;
+}
+
+.btn--osm:hover,
+.btn--osm-active {
+  background: #16a34a !important;
+  border-color: #16a34a !important;
+  color: #fff !important;
+}
+
+/* ── OSM knooppunt markers ───────────────────────────────── */
+
+.knooppunt-icon--osm {
+  background: #16a34a !important;
+  border-color: #15803d !important;
+  opacity: 0.9;
+}
+
+.knooppunt-badge--osm {
+  background: #16a34a;
+  border-color: #15803d;
+}
