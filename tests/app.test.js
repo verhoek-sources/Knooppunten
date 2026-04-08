@@ -70,8 +70,22 @@ document.body.innerHTML = `
       <button id="center-btn" class="btn" type="button">
         &#10022; Centreer
       </button>
+      <button id="gpx-content-btn" class="btn" type="button" hidden>
+        &#128203; GPX inhoud
+      </button>
     </div>
     <div id="knooppunten-list" aria-live="polite" aria-label="Knooppunten lijst"></div>
+  </div>
+  <div id="gpx-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="gpx-modal-title" hidden>
+    <div class="modal__backdrop"></div>
+    <div class="modal__panel" role="document">
+      <div class="modal__header">
+        <h2 id="gpx-modal-title" class="modal__title">GPX inhoud</h2>
+        <button id="gpx-raw-btn" class="btn modal__raw-btn" type="button">&#128196; Ruw</button>
+        <button id="gpx-modal-close" class="btn modal__close" type="button" aria-label="Sluiten">&#10005;</button>
+      </div>
+      <div id="gpx-modal-body" class="modal__body"></div>
+    </div>
   </div>
 `;
 
@@ -296,6 +310,59 @@ describe('No-knooppunten GPX with route points – panel shows route point count
     const list = document.getElementById('knooppunten-list');
     expect(list.textContent).toContain('Routepunten');
     expect(list.textContent).toContain('3');
+  });
+});
+
+// ── Raw GPX button ────────────────────────────────────────────────────────────
+
+describe('Raw GPX button – DOM structure', () => {
+  test('modal contains a raw GPX button', () => {
+    const btn = document.getElementById('gpx-raw-btn');
+    expect(btn).not.toBeNull();
+    expect(btn.getAttribute('type')).toBe('button');
+  });
+});
+
+describe('Raw GPX button – shows raw file content', () => {
+  const sampleGPX = `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" xmlns="http://www.topografix.com/GPX/1/1">
+  <wpt lat="52.3000" lon="4.8000">
+    <name>42</name>
+  </wpt>
+</gpx>`;
+
+  beforeEach(() => {
+    loadGpxFile(sampleGPX);
+  });
+
+  test('clicking the raw button reveals the modal', () => {
+    const modal = document.getElementById('gpx-modal');
+    expect(modal.hidden).toBe(true);
+    document.getElementById('gpx-raw-btn').click();
+    expect(modal.hidden).toBe(false);
+  });
+
+  test('raw modal body contains a pre element with the raw XML', () => {
+    document.getElementById('gpx-raw-btn').click();
+    const pre = document.querySelector('#gpx-modal-body .gpx-raw');
+    expect(pre).not.toBeNull();
+    expect(pre.tagName).toBe('PRE');
+  });
+
+  test('raw pre element contains the exact GPX source text', () => {
+    document.getElementById('gpx-raw-btn').click();
+    const pre = document.querySelector('#gpx-modal-body .gpx-raw');
+    expect(pre.textContent).toContain('<?xml version="1.0"');
+    expect(pre.textContent).toContain('<gpx version="1.1"');
+    expect(pre.textContent).toContain('<name>42</name>');
+  });
+
+  test('close button hides the modal after raw view', () => {
+    document.getElementById('gpx-raw-btn').click();
+    const modal = document.getElementById('gpx-modal');
+    expect(modal.hidden).toBe(false);
+    document.getElementById('gpx-modal-close').click();
+    expect(modal.hidden).toBe(true);
   });
 });
 
