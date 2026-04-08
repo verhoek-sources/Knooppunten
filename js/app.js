@@ -6,6 +6,7 @@
 
 const App = (() => {
   let gpxData = null;
+  let rawGpxText = null;
   let currentPosition = null;
   let passedKnooppunten = new Set();
 
@@ -19,6 +20,7 @@ const App = (() => {
   let gpxModal = null;
   let gpxModalBody = null;
   let gpxModalCloseBtn = null;
+  let gpxRawBtn = null;
 
   /**
    * Initialise the application.
@@ -59,6 +61,10 @@ const App = (() => {
       if (backdrop) {
         backdrop.addEventListener('click', closeGpxContent);
       }
+      gpxRawBtn = document.getElementById('gpx-raw-btn');
+      if (gpxRawBtn) {
+        gpxRawBtn.addEventListener('click', showRawGpxContent);
+      }
       document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && !gpxModal.hidden) {
           closeGpxContent();
@@ -88,6 +94,7 @@ const App = (() => {
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
+        rawGpxText = e.target.result;
         gpxData = parseGPX(e.target.result);
         passedKnooppunten.clear();
         MapManager.displayRoute(gpxData);
@@ -439,6 +446,25 @@ const App = (() => {
       if (gpxContentBtn) {
         gpxContentBtn.focus();
       }
+    }
+  }
+
+  /**
+   * Show the raw XML text of the loaded GPX file in the modal.
+   */
+  function showRawGpxContent() {
+    if (!rawGpxText || !gpxModal || !gpxModalBody) return;
+
+    gpxModalBody.textContent = '';
+
+    const pre = document.createElement('pre');
+    pre.className = 'gpx-raw';
+    pre.textContent = rawGpxText;
+    gpxModalBody.appendChild(pre);
+
+    gpxModal.hidden = false;
+    if (gpxModalCloseBtn) {
+      gpxModalCloseBtn.focus();
     }
   }
 
