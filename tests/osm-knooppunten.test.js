@@ -218,6 +218,8 @@ describe('OsmKnooppunten.fetchForRoute', () => {
     const gpxData = {
       trackPoints:  [{ lat: 51.5, lon: 5.0 }],
       routePoints:  [{ lat: 52.0, lon: 5.5 }],
+      // gpxData.knooppunten contains ALL wpt elements, not just knooppunten;
+      // isKnooppunt: false means it is a named waypoint (e.g. "Startpunt"), not a node number.
       knooppunten:  [{ lat: 51.7, lon: 4.8, name: 'X', isKnooppunt: false }],
     };
 

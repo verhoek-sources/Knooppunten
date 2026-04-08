@@ -103,7 +103,7 @@ out body;`;
     });
 
     if (!response.ok) {
-      throw new Error(`Overpass API fout: ${response.status} ${response.statusText}`);
+      throw new Error(`Overpass API fout: ${response.status}`);
     }
 
     const data = await response.json();
