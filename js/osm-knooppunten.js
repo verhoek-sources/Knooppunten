@@ -4,7 +4,10 @@
  */
 
 const OsmKnooppunten = (() => {
-  const OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
+  const OVERPASS_ENDPOINTS = [
+    'https://overpass-api.de/api/interpreter',
+    'https://overpass.kumi.systems/api/interpreter',
+  ];
 
   /**
    * Compute a bounding box from an array of lat/lon points, with an optional buffer.
@@ -77,7 +80,44 @@ out body;`;
   }
 
   /**
+   * Attempt to POST the Overpass query to each endpoint in sequence, falling back
+   * to the next one on server errors (5xx).  Client errors (4xx) are thrown
+   * immediately without retrying.
+   *
+   * @param {string} query
+   * @returns {Promise<Response>}
+   */
+  async function fetchWithFallback(query) {
+    const body = 'data=' + encodeURIComponent(query);
+    const options = {
+      method: 'POST',
+      body,
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    };
+
+    let lastError;
+    for (const url of OVERPASS_ENDPOINTS) {
+      const response = await fetch(url, options);
+
+      if (response.ok) {
+        return response;
+      }
+
+      lastError = new Error(`Overpass API fout: ${response.status}`);
+
+      // Client errors (4xx) won't be fixed by a different endpoint — throw immediately
+      if (response.status < 500) {
+        throw lastError;
+      }
+      // Server error (5xx) — try next endpoint
+    }
+
+    throw lastError;
+  }
+
+  /**
    * Fetch knooppunten from OpenStreetMap for the bounding box of the given GPX data.
+   * Tries multiple Overpass endpoints, falling back on server errors (5xx).
    *
    * @param {{ trackPoints: Array, routePoints: Array, knooppunten: Array }} gpxData
    * @returns {Promise<Array>}
@@ -96,16 +136,7 @@ out body;`;
     const bounds = computeBounds(allPoints);
     const query = buildQuery(bounds);
 
-    const response = await fetch(OVERPASS_URL, {
-      method: 'POST',
-      body: 'data=' + encodeURIComponent(query),
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Overpass API fout: ${response.status}`);
-    }
-
+    const response = await fetchWithFallback(query);
     const data = await response.json();
     return parseOverpassResponse(data);
   }

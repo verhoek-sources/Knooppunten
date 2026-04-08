@@ -233,4 +233,63 @@ describe('OsmKnooppunten.fetchForRoute', () => {
     // north should be max lat (52.0) plus buffer
     expect(decoded).toContain('52.01');
   });
+
+  test('falls back to second endpoint on 504 (gateway timeout) error', async () => {
+    global.fetch = jest.fn()
+      .mockResolvedValueOnce({ ok: false, status: 504, statusText: 'Gateway Timeout' })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ elements: [] }) });
+
+    const gpxData = {
+      trackPoints: [{ lat: 51.5, lon: 5.0 }],
+      routePoints: [],
+      knooppunten: [],
+    };
+
+    const result = await OsmKnooppunten.fetchForRoute(gpxData);
+
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+    expect(global.fetch.mock.calls[0][0]).toBe('https://overpass-api.de/api/interpreter');
+    expect(global.fetch.mock.calls[1][0]).toBe('https://overpass.kumi.systems/api/interpreter');
+    expect(result).toEqual([]);
+  });
+
+  test('throws with last error message when all endpoints fail with 5xx', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 503,
+      statusText: 'Service Unavailable',
+    });
+
+    const gpxData = {
+      trackPoints: [{ lat: 51.5, lon: 5.0 }],
+      routePoints: [],
+      knooppunten: [],
+    };
+
+    await expect(OsmKnooppunten.fetchForRoute(gpxData)).rejects.toThrow(
+      'Overpass API fout: 503'
+    );
+    // Both endpoints should have been tried
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+  });
+
+  test('does not fall back on 4xx client errors', async () => {
+    global.fetch = jest.fn().mockResolvedValueOnce({
+      ok: false,
+      status: 400,
+      statusText: 'Bad Request',
+    });
+
+    const gpxData = {
+      trackPoints: [{ lat: 51.5, lon: 5.0 }],
+      routePoints: [],
+      knooppunten: [],
+    };
+
+    await expect(OsmKnooppunten.fetchForRoute(gpxData)).rejects.toThrow(
+      'Overpass API fout: 400'
+    );
+    // Only the first endpoint should have been tried
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
 });

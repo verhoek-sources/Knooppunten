@@ -145,6 +145,7 @@ header h1 {
 
 .panel-toolbar {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   padding: 6px 16px;
   border-bottom: 1px solid var(--color-border);
@@ -158,6 +159,8 @@ header h1 {
   font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
   transition: background 0.15s, color 0.15s;
 }
 
