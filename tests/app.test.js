@@ -207,3 +207,95 @@ describe('MapManager – auto-scroll to user location', () => {
     expect(mockMap.setView).toHaveBeenCalledWith([52.0, 5.1], 17);
   });
 });
+
+// ── Helper: simulate loading a GPX file via the file input ────────────────────
+
+function loadGpxFile(gpxContent) {
+  const OrigFileReader = global.FileReader;
+  global.FileReader = class {
+    readAsText() {
+      this.onload({ target: { result: gpxContent } });
+    }
+  };
+  const input = document.getElementById('gpx-file');
+  const file = new File([gpxContent], 'route.gpx', { type: 'application/gpx+xml' });
+  Object.defineProperty(input, 'files', { value: [file], configurable: true });
+  input.dispatchEvent(new Event('change'));
+  global.FileReader = OrigFileReader;
+}
+
+// ── No-knooppunten GPX panel ──────────────────────────────────────────────────
+
+describe('No-knooppunten GPX – panel shows waypoints and trackpoints', () => {
+  const noKnooppuntenGPX = `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" xmlns="http://www.topografix.com/GPX/1/1">
+  <wpt lat="51.5012" lon="5.1034">
+    <name>Startpunt</name>
+  </wpt>
+  <wpt lat="51.5123" lon="5.1145">
+    <name>Eindpunt</name>
+  </wpt>
+  <trk>
+    <trkseg>
+      <trkpt lat="51.5000" lon="5.1000"><ele>5</ele></trkpt>
+      <trkpt lat="51.5050" lon="5.1050"><ele>6</ele></trkpt>
+    </trkseg>
+  </trk>
+</gpx>`;
+
+  beforeEach(() => {
+    loadGpxFile(noKnooppuntenGPX);
+  });
+
+  test('shows the no-knooppunten message', () => {
+    const noMsg = document.querySelector('#knooppunten-list .no-knooppunten');
+    expect(noMsg).not.toBeNull();
+    expect(noMsg.textContent).toContain('Geen knooppunten gevonden');
+  });
+
+  test('shows all waypoint names', () => {
+    const list = document.getElementById('knooppunten-list');
+    expect(list.textContent).toContain('Startpunt');
+    expect(list.textContent).toContain('Eindpunt');
+  });
+
+  test('shows waypoint coordinates', () => {
+    const coords = document.querySelectorAll('#knooppunten-list .gpx-coords');
+    expect(coords.length).toBe(2);
+    expect(coords[0].textContent).toContain('51.50120');
+    expect(coords[0].textContent).toContain('5.10340');
+  });
+
+  test('shows trackpoints count', () => {
+    const list = document.getElementById('knooppunten-list');
+    expect(list.textContent).toContain('Trackpunten');
+    expect(list.textContent).toContain('2');
+  });
+
+  test('waypoints are rendered in a list', () => {
+    const waypointItems = document.querySelectorAll('#knooppunten-list .waypoint-item');
+    expect(waypointItems.length).toBe(2);
+  });
+});
+
+describe('No-knooppunten GPX with route points – panel shows route point count', () => {
+  const routeOnlyGPX = `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" xmlns="http://www.topografix.com/GPX/1/1">
+  <rte>
+    <rtept lat="51.5012" lon="5.1034"><name>Punt A</name></rtept>
+    <rtept lat="51.5123" lon="5.1145"><name>Punt B</name></rtept>
+    <rtept lat="51.5200" lon="5.1200"><name>Punt C</name></rtept>
+  </rte>
+</gpx>`;
+
+  beforeEach(() => {
+    loadGpxFile(routeOnlyGPX);
+  });
+
+  test('shows route points count when no track points exist', () => {
+    const list = document.getElementById('knooppunten-list');
+    expect(list.textContent).toContain('Routepunten');
+    expect(list.textContent).toContain('3');
+  });
+});
+
