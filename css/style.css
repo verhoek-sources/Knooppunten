@@ -249,6 +249,53 @@ header h1 {
   padding: 8px;
 }
 
+/* ── Route summary (no-knooppunten mode) ─────────────────── */
+
+.route-summary {
+  padding: 6px 8px;
+}
+
+.route-summary__heading {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  margin-top: 8px;
+  margin-bottom: 4px;
+}
+
+.route-summary__stat {
+  font-size: 0.875rem;
+  margin-bottom: 4px;
+  color: var(--color-text);
+}
+
+.route-summary__stat strong {
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.waypoints-list {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 6px;
+}
+
+.waypoint-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8125rem;
+}
+
+.waypoint-name {
+  font-weight: 600;
+  color: var(--color-text);
+  min-width: 60px;
+}
+
 /* ── Leaflet custom markers ──────────────────────────────── */
 
 .knooppunt-icon {
