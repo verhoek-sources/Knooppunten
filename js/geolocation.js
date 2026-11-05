@@ -51,6 +51,39 @@ const GeoTracker = (() => {
   }
 
   /**
+   * Get the current position once (without continuous tracking).
+   *
+   * @param {function} onPosition - Called with { lat, lon, accuracy, heading, speed }
+   * @param {function} onError    - Called with an error message string on failure
+   */
+  function getCurrent(onPosition, onError) {
+    if (!navigator.geolocation) {
+      onError('GPS wordt niet ondersteund door uw browser.');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        onPosition({
+          lat: pos.coords.latitude,
+          lon: pos.coords.longitude,
+          accuracy: pos.coords.accuracy,
+          heading: pos.coords.heading,
+          speed: pos.coords.speed,
+        });
+      },
+      (err) => {
+        const messages = {
+          1: 'Toegang tot GPS geweigerd. Controleer uw browserinstellingen.',
+          2: 'GPS positie niet beschikbaar.',
+          3: 'GPS verzoek verlopen.',
+        };
+        onError(messages[err.code] || 'Onbekende GPS fout.');
+      },
+      options
+    );
+  }
+
+  /**
    * Stop watching the GPS position.
    */
   function stop() {
@@ -69,7 +102,7 @@ const GeoTracker = (() => {
     return watchId !== null;
   }
 
-  return { start, stop, isTracking };
+  return { start, getCurrent, stop, isTracking };
 })();
 
 // Export for Node.js/Jest (tests) while keeping global for browser use
