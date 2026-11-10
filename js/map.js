@@ -41,6 +41,8 @@ const MapManager = (() => {
    *
    * @param {string} containerId
    */
+  let autoFollow = true;
+
   function init(containerId) {
     map = L.map(containerId, { zoomControl: true });
 
@@ -132,7 +134,9 @@ const MapManager = (() => {
       }
     }
 
-    map.setView(latlng, Math.max(map.getZoom(), 14));
+    if (autoFollow) {
+      map.setView(latlng, Math.max(map.getZoom(), 14));
+    }
   }
 
   /**
@@ -191,11 +195,15 @@ const MapManager = (() => {
    *
    * @param {{ lat: number, lon: number }} position
    */
+  function setAutoFollow(enabled) {
+    autoFollow = enabled;
+  }
+
   function panToPosition(position) {
     map.panTo([position.lat, position.lon]);
   }
 
-  return { init, displayRoute, updatePosition, setActiveKnooppunt, clearRoute, panToPosition, displayOsmKnooppunten, clearOsmKnooppunten };
+  return { init, setAutoFollow, displayRoute, updatePosition, setActiveKnooppunt, clearRoute, panToPosition, displayOsmKnooppunten, clearOsmKnooppunten };
 })();
 
 // Export for Node.js/Jest (tests) while keeping global for browser use
