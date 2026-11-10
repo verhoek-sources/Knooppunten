@@ -43,6 +43,11 @@ const App = (() => {
 
     fileInput.addEventListener('change', handleFileChange);
 
+    const refreshBtn = document.getElementById('refresh-btn');
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', () => window.location.reload());
+    }
+
     if (trackingBtn) {
       trackingBtn.addEventListener('click', toggleTracking);
     }
