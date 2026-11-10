@@ -59,6 +59,16 @@ const App = (() => {
         }
       });
     }
+    const followBtn = document.getElementById('follow-btn');
+    if (followBtn) {
+      let following = true;
+      followBtn.addEventListener('click', () => {
+        following = !following;
+        MapManager.setAutoFollow(following);
+        followBtn.setAttribute('aria-pressed', String(following));
+        followBtn.innerHTML = following ? '&#128274; Volgen aan' : '&#128275; Volgen uit';
+      });
+    }
     if (gpxContentBtn) {
       gpxContentBtn.addEventListener('click', showGpxContent);
     }
