@@ -50,6 +50,12 @@ const App = (() => {
       centerBtn.addEventListener('click', () => {
         if (currentPosition) {
           MapManager.panToPosition(currentPosition);
+        } else {
+          GeoTracker.getCurrent((pos) => {
+            currentPosition = pos;
+            MapManager.updatePosition(pos);
+            MapManager.panToPosition(pos);
+          }, onGeoError);
         }
       });
     }
